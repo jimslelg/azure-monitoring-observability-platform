@@ -1,0 +1,145 @@
+{
+  "title": "Azure Platform Overview",
+  "uid": "amop-platform-overview",
+  "tags": ["amop", "azure-monitor"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "editable": true,
+  "time": { "from": "now-24h", "to": "now" },
+  "refresh": "5m",
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "grafana-azure-monitor-datasource",
+        "label": "Azure Monitor"
+      },
+      {
+        "name": "subscription",
+        "type": "custom",
+        "label": "Subscription",
+        "query": "set-me-in-grafana",
+        "current": { "text": "set-me-in-grafana", "value": "set-me-in-grafana" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "App Service — HTTP 5xx",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "metricNamespace": "Microsoft.Web/sites",
+            "metricName": "Http5xx",
+            "aggregation": "Total",
+            "timeGrain": "auto",
+            "region": "canadacentral"
+          }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "App Service — Response Time",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "metricNamespace": "Microsoft.Web/sites",
+            "metricName": "HttpResponseTime",
+            "aggregation": "Average",
+            "timeGrain": "auto",
+            "region": "canadacentral"
+          }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "SQL — CPU %",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "metricNamespace": "Microsoft.Sql/servers/databases",
+            "metricName": "cpu_percent",
+            "aggregation": "Average",
+            "timeGrain": "auto",
+            "region": "canadacentral"
+          }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "max": 100, "min": 0 }, "overrides": [] }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Storage — Availability",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Monitor",
+          "azureMonitor": {
+            "metricNamespace": "Microsoft.Storage/storageAccounts",
+            "metricName": "Availability",
+            "aggregation": "Average",
+            "timeGrain": "auto",
+            "region": "canadacentral"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "max": 100,
+          "min": 99,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 99.9 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Log Analytics — Ingestion Volume by Table (GB/day)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "datasource": { "type": "grafana-azure-monitor-datasource", "uid": "${datasource}" },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "Usage | where IsBillable == true | summarize IngestedGB = sum(Quantity) / 1000 by bin(TimeGenerated, 1d), DataType | order by TimeGenerated asc",
+            "resultFormat": "time_series"
+          }
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "decgbytes" }, "overrides": [] }
+    }
+  ]
+}

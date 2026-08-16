@@ -1,0 +1,55 @@
+# Reference copy of the platform's Prometheus rules in native rule-file
+# format. The authoritative definitions are Terraform-managed Azure
+# prometheusRuleGroups (terraform/modules/managed-prometheus); this file
+# exists so the same rules can be loaded into a self-hosted Prometheus or
+# reviewed by engineers who read promtool syntax.
+groups:
+  - name: kubernetes-alerts
+    interval: 1m
+    rules:
+      - alert: KubeNodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 10m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Node {{ $labels.node }} has been NotReady for more than 10 minutes."
+
+      - alert: KubePodCrashLooping
+        expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} restarted more than 3 times in 15 minutes."
+
+      - alert: KubeContainerOOMKilled
+        expr: increase(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[15m]) > 0
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} was OOMKilled."
+
+      - alert: KubePersistentVolumeFillingUp
+        expr: kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes < 0.10
+        for: 15m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "PV for claim {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} is below 10% free."
+
+  - name: kubernetes-recording
+    interval: 1m
+    rules:
+      - record: node:cpu_utilisation:avg5m
+        expr: 1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))
+      - record: node:memory_utilisation:ratio
+        expr: 1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+      - record: namespace:container_cpu_usage:sum_rate5m
+        expr: sum by (namespace) (rate(container_cpu_usage_seconds_total{container!=""}[5m]))
+      - record: namespace:container_memory_working_set:sum
+        expr: sum by (namespace) (container_memory_working_set_bytes{container!=""})
