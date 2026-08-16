@@ -1,0 +1,8 @@
+// Deadlock events by database (last 7 d)
+// Pair with the deadlock metric alert; this shows which databases and when.
+// Tables: AzureDiagnostics
+AzureDiagnostics
+| where TimeGenerated > ago(7d)
+| where Category == "Deadlocks"
+| summarize Deadlocks = count() by Resource, bin(TimeGenerated, 1h)
+| render timechart

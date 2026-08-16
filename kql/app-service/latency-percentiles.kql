@@ -1,0 +1,7 @@
+// Request latency percentiles by operation (last 24 h)
+// p50/p95/p99 — averages hide tail pain; the p99 column is what users feel.
+// Tables: AppRequests
+AppRequests
+| where TimeGenerated > ago(24h)
+| summarize p50 = percentile(DurationMs, 50), p95 = percentile(DurationMs, 95), p99 = percentile(DurationMs, 99), Count = count() by OperationName
+| order by p99 desc

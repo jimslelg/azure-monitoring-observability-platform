@@ -1,0 +1,9 @@
+// Storage operations failing by response type (last 24 h)
+// Blob-service logs broken down by status — throttling (ServerBusyError)
+// and auth failures stand out immediately.
+// Tables: StorageBlobLogs
+StorageBlobLogs
+| where TimeGenerated > ago(24h)
+| where StatusCode >= 400
+| summarize Count = count() by StatusCode, StatusText, OperationName
+| order by Count desc

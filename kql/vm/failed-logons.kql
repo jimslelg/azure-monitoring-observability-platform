@@ -1,0 +1,11 @@
+// Windows failed logons by account and source (last 24 h)
+// Event 4625 collected by the Windows DCR; spikes from one source IP are
+// password spraying, spikes for one account are lockout loops.
+// Tables: Event
+Event
+| where TimeGenerated > ago(24h)
+| where EventLog == "Security" and EventID == 4625
+| parse RenderedDescription with * "Account Name:" TargetAccount "\n" *
+| summarize Failures = count() by Computer, TargetAccount = trim(" \t", TargetAccount)
+| order by Failures desc
+| take 25

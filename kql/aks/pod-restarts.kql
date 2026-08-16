@@ -1,0 +1,10 @@
+// Pod restart hotspots (last 24 h)
+// Surfaces workloads whose containers restart repeatedly — usually crash
+// loops, OOM kills, or failing liveness probes.
+// Tables: KubePodInventory
+KubePodInventory
+| where TimeGenerated > ago(24h)
+| summarize Restarts = max(ContainerRestartCount) by Name, Namespace, ControllerName
+| where Restarts > 0
+| order by Restarts desc
+| take 25

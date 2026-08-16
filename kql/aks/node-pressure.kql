@@ -1,0 +1,9 @@
+// Node resource pressure (last 4 h)
+// CPU and memory utilisation per node from Container Insights perf data;
+// sustained > 85% on a node while others idle points at skewed scheduling.
+// Tables: Perf (Container Insights)
+Perf
+| where TimeGenerated > ago(4h)
+| where ObjectName == "K8SNode" and CounterName in ("cpuUsagePercentage", "memoryWorkingSetPercentage")
+| summarize AvgValue = avg(CounterValue) by Computer, CounterName, bin(TimeGenerated, 5m)
+| render timechart

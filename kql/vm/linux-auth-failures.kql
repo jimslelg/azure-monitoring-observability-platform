@@ -1,0 +1,9 @@
+// Linux authentication failures (last 24 h)
+// sshd/sudo failures from the auth/authpriv syslog facilities.
+// Tables: Syslog
+Syslog
+| where TimeGenerated > ago(24h)
+| where Facility in ("auth", "authpriv")
+| where SyslogMessage has_any ("Failed password", "authentication failure", "Invalid user")
+| summarize Failures = count(), Sample = any(SyslogMessage) by Computer, ProcessName
+| order by Failures desc

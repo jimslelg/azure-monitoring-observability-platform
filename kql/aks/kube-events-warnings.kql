@@ -1,0 +1,9 @@
+// Kubernetes warning events (last 6 h)
+// FailedScheduling, BackOff, Unhealthy, FailedMount — the events that explain
+// why pods aren't where they should be.
+// Tables: KubeEvents
+KubeEvents
+| where TimeGenerated > ago(6h)
+| where KubeEventType == "Warning"
+| summarize Count = count(), Sample = any(Message) by Reason, Namespace, ObjectKind
+| order by Count desc

@@ -1,0 +1,9 @@
+// Failed requests by operation (last 6 h)
+// Application Insights request telemetry grouped by operation and result
+// code — the first query to run when the 5xx alert fires.
+// Tables: AppRequests (workspace-based Application Insights)
+AppRequests
+| where TimeGenerated > ago(6h)
+| where Success == false
+| summarize Failures = count(), AvgDurationMs = avg(DurationMs) by OperationName, ResultCode
+| order by Failures desc

@@ -1,0 +1,9 @@
+// Top talkers by transferred bytes (last 24 h)
+// Highest-volume allowed flows — capacity planning and exfiltration review.
+// Tables: AzureNetworkAnalytics_CL (Traffic Analytics)
+AzureNetworkAnalytics_CL
+| where TimeGenerated > ago(24h)
+| where SubType_s == "FlowLog" and FlowStatus_s == "A"
+| summarize TotalBytes = sum(InboundBytes_d + OutboundBytes_d) by SrcIP_s, DestIP_s, L7Protocol_s
+| order by TotalBytes desc
+| take 50

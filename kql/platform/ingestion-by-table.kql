@@ -1,0 +1,9 @@
+// Billable ingestion by table (last 30 d)
+// The cost-control query: which tables are driving the Log Analytics bill,
+// and whether volume is trending up.
+// Tables: Usage
+Usage
+| where TimeGenerated > ago(30d)
+| where IsBillable == true
+| summarize IngestedGB = sum(Quantity) / 1000 by DataType, bin(TimeGenerated, 1d)
+| render columnchart

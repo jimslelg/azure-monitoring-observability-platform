@@ -1,0 +1,78 @@
+{
+  "lenses": {
+    "0": {
+      "order": 0,
+      "parts": {
+        "0": {
+          "position": { "x": 0, "y": 0, "colSpan": 6, "rowSpan": 2 },
+          "metadata": {
+            "type": "Extension/HubsExtension/PartType/MarkdownPart",
+            "inputs": [],
+            "settings": {
+              "content": {
+                "settings": {
+                  "content": "## Azure Monitoring & Observability Platform — ${environment}\n\nCentral workspace: **${workspace_name}**\n\n- [Platform Health workbook](#blade/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/workbooks)\n- [Cost & Ingestion workbook](#blade/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/workbooks)\n- Grafana: see `grafana_endpoint` Terraform output\n\nAlert routing: Sev0-1 page on-call, Sev2-3 platform team, Sev4 informational.",
+                  "title": "Platform overview",
+                  "subtitle": ""
+                }
+              }
+            }
+          }
+        },
+        "1": {
+          "position": { "x": 6, "y": 0, "colSpan": 6, "rowSpan": 4 },
+          "metadata": {
+            "type": "Extension/HubsExtension/PartType/MonitorChartPart",
+            "inputs": [
+              {
+                "name": "options",
+                "isOptional": true,
+                "value": {
+                  "chart": {
+                    "metrics": [
+                      {
+                        "resourceMetadata": { "id": "${workspace_id}" },
+                        "name": "Heartbeat",
+                        "aggregationType": 4,
+                        "namespace": "microsoft.operationalinsights/workspaces",
+                        "metricVisualization": { "displayName": "Heartbeat" }
+                      }
+                    ],
+                    "title": "Workspace heartbeat (agent liveness)",
+                    "titleKind": 1,
+                    "visualization": { "chartType": 2 }
+                  }
+                }
+              }
+            ],
+            "settings": {}
+          }
+        },
+        "2": {
+          "position": { "x": 0, "y": 2, "colSpan": 6, "rowSpan": 2 },
+          "metadata": {
+            "type": "Extension/HubsExtension/PartType/MarkdownPart",
+            "inputs": [],
+            "settings": {
+              "content": {
+                "settings": {
+                  "content": "### Runbook shortcuts\n\n| Signal | First query |\n|---|---|\n| VM down | `kql/vm/heartbeat-gaps.kql` |\n| App 5xx spike | `kql/app-service/request-failures.kql` |\n| SQL slow | `kql/sql/slow-queries.kql` |\n| Pod crash loop | `kql/aks/pod-restarts.kql` |\n| Ingestion cost | `kql/platform/ingestion-by-table.kql` |",
+                  "title": "Incident entry points",
+                  "subtitle": ""
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "metadata": {
+    "model": {
+      "timeRange": {
+        "value": { "relative": { "duration": 24, "timeUnit": 1 } },
+        "type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
+      }
+    }
+  }
+}

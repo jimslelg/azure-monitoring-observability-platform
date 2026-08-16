@@ -1,0 +1,11 @@
+// Disk free-space trend per volume (last 7 d)
+// Normalises Windows (% Free Space) and Linux (% Used Space) counters into a
+// single FreePct series for capacity planning.
+// Tables: Perf (AMA)
+Perf
+| where TimeGenerated > ago(7d)
+| where ObjectName in ("LogicalDisk", "Logical Disk")
+| where CounterName in ("% Free Space", "% Used Space")
+| extend FreePct = iff(CounterName == "% Free Space", CounterValue, 100 - CounterValue)
+| summarize AvgFreePct = avg(FreePct) by Computer, InstanceName, bin(TimeGenerated, 1h)
+| render timechart

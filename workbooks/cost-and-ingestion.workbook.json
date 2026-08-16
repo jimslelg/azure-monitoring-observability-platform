@@ -1,0 +1,62 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "name": "header",
+      "content": {
+        "json": "# Cost & Ingestion\nWhere the Log Analytics bill comes from. Review monthly: the top table should be a deliberate choice, not a surprise."
+      }
+    },
+    {
+      "type": 3,
+      "name": "ingestion-trend",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Usage\n| where TimeGenerated > ago(30d)\n| where IsBillable == true\n| summarize IngestedGB = sum(Quantity) / 1000 by bin(TimeGenerated, 1d)\n| render timechart",
+        "size": 0,
+        "title": "Daily billable ingestion (GB, 30 d)",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "timechart"
+      }
+    },
+    {
+      "type": 3,
+      "name": "ingestion-by-table",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Usage\n| where TimeGenerated > ago(30d)\n| where IsBillable == true\n| summarize IngestedGB = round(sum(Quantity) / 1000, 2) by DataType\n| order by IngestedGB desc",
+        "size": 0,
+        "title": "Billable ingestion by table (30 d)",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "IngestedGB",
+              "formatter": 8,
+              "formatOptions": { "palette": "blue" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": 3,
+      "name": "top-computers",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "find where TimeGenerated > ago(7d) project _BilledSize, Computer\n| where isnotempty(Computer)\n| summarize BilledGB = round(sum(_BilledSize) / 1e9, 2) by Computer\n| order by BilledGB desc\n| take 20",
+        "size": 0,
+        "title": "Top 20 computers by billed volume (7 d)",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      }
+    }
+  ],
+  "fallbackResourceIds": [],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

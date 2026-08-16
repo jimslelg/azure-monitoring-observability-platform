@@ -1,0 +1,8 @@
+// Alert volume by rule (last 30 d)
+// Alert-noise review: rules that fire daily but never page a human awake
+// need retuning or downgrading to informational.
+// Tables: Alert (requires AlertManagement solution / alert export)
+Alert
+| where TimeGenerated > ago(30d)
+| summarize Fired = count() by AlertName, AlertSeverity
+| order by Fired desc

@@ -1,0 +1,9 @@
+// Anonymous or SAS access to blobs (last 7 d)
+// Audit query: anything anonymous should be a deliberate decision, and SAS
+// usage should match known integrations.
+// Tables: StorageBlobLogs
+StorageBlobLogs
+| where TimeGenerated > ago(7d)
+| where AuthenticationType in ("Anonymous", "SAS")
+| summarize Requests = count(), Sample = any(Uri) by AuthenticationType, CallerIpAddress
+| order by Requests desc

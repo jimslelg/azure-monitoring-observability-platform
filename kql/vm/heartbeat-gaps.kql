@@ -1,0 +1,8 @@
+// VMs with missing or stale heartbeats
+// Anything not seen in 10 minutes is down or has a broken agent.
+// Tables: Heartbeat
+Heartbeat
+| summarize LastHeartbeat = max(TimeGenerated) by Computer, ResourceGroup = ResourceGroup, _ResourceId
+| extend MinutesSilent = datetime_diff("minute", now(), LastHeartbeat)
+| where MinutesSilent > 10
+| order by MinutesSilent desc

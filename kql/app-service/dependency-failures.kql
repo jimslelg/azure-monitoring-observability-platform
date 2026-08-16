@@ -1,0 +1,10 @@
+// Failing downstream dependencies (last 6 h)
+// SQL, HTTP, and storage calls made by the app that are erroring or slow —
+// distinguishes "our bug" from "their outage".
+// Tables: AppDependencies
+AppDependencies
+| where TimeGenerated > ago(6h)
+| summarize Failures = countif(Success == false), Total = count(), AvgDurationMs = avg(DurationMs) by DependencyType, Target
+| extend FailureRate = round(100.0 * Failures / Total, 2)
+| where Failures > 0
+| order by FailureRate desc

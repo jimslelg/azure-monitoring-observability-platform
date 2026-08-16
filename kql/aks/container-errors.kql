@@ -1,0 +1,9 @@
+// Container stderr volume by workload (last 6 h)
+// Ranks workloads by error-line output; a sudden jump for one workload is a
+// faster incident signal than scanning raw logs.
+// Tables: ContainerLogV2
+ContainerLogV2
+| where TimeGenerated > ago(6h)
+| where LogSource == "stderr"
+| summarize ErrorLines = count() by PodNamespace, ContainerName, bin(TimeGenerated, 15m)
+| render timechart

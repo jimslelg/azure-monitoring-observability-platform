@@ -1,0 +1,9 @@
+// Blocking and timeout incidents (last 24 h)
+// Blocks and Timeouts categories from SQL diagnostics — sustained blocking
+// usually precedes the timeout spike.
+// Tables: AzureDiagnostics
+AzureDiagnostics
+| where TimeGenerated > ago(24h)
+| where Category in ("Blocks", "Timeouts")
+| summarize Incidents = count() by Resource, Category, bin(TimeGenerated, 30m)
+| render timechart

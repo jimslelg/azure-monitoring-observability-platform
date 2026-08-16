@@ -1,0 +1,108 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "name": "header",
+      "content": {
+        "json": "# Platform Health\nSingle pane for the monitoring platform itself: agent coverage, workload heartbeats, and the noisiest alerts. Time range applies to every grid below."
+      }
+    },
+    {
+      "type": 9,
+      "name": "parameters",
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "b8f5a1c2-0001-4c8e-9d2f-workbookparam",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Time range",
+            "type": 4,
+            "isRequired": true,
+            "value": { "durationMs": 86400000 },
+            "typeSettings": {
+              "selectableValues": [
+                { "durationMs": 3600000 },
+                { "durationMs": 14400000 },
+                { "durationMs": 86400000 },
+                { "durationMs": 604800000 }
+              ]
+            }
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      }
+    },
+    {
+      "type": 3,
+      "name": "agent-coverage",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Heartbeat\n| summarize Machines = dcount(Computer), LastSeen = max(TimeGenerated) by ResourceGroup, Category\n| order by Machines desc",
+        "size": 0,
+        "title": "Agent coverage by resource group",
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "silent-machines",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "Heartbeat\n| summarize LastHeartbeat = max(TimeGenerated) by Computer, _ResourceId\n| extend MinutesSilent = datetime_diff(\"minute\", now(), LastHeartbeat)\n| where MinutesSilent > 10\n| order by MinutesSilent desc",
+        "size": 0,
+        "title": "Machines silent for more than 10 minutes",
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "MinutesSilent",
+              "formatter": 8,
+              "formatOptions": { "palette": "redGreen", "reverse": true }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": 3,
+      "name": "container-restarts",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "KubePodInventory\n| summarize Restarts = max(ContainerRestartCount) by Name, Namespace, ControllerName\n| where Restarts > 0\n| order by Restarts desc\n| take 25",
+        "size": 0,
+        "title": "Pod restart hotspots",
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "kube-warnings",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "KubeEvents\n| where KubeEventType == \"Warning\"\n| summarize Count = count(), Sample = any(Message) by Reason, Namespace, ObjectKind\n| order by Count desc",
+        "size": 0,
+        "title": "Kubernetes warning events",
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      }
+    }
+  ],
+  "fallbackResourceIds": [],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

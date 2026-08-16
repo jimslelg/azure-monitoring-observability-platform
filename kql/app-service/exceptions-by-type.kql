@@ -1,0 +1,9 @@
+// Server-side exceptions by problem ID (last 24 h)
+// Groups exception telemetry into distinct failure signatures with a sample
+// outer message for triage.
+// Tables: AppExceptions
+AppExceptions
+| where TimeGenerated > ago(24h)
+| summarize Count = count(), Sample = any(OuterMessage), AffectedOps = dcount(OperationName) by ProblemId
+| order by Count desc
+| take 25

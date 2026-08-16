@@ -1,0 +1,10 @@
+// Top denied flows from Traffic Analytics (last 24 h)
+// Who is being blocked, by which NSG rule, to which destination — separates
+// internet scanning noise from broken internal traffic.
+// Tables: AzureNetworkAnalytics_CL (Traffic Analytics)
+AzureNetworkAnalytics_CL
+| where TimeGenerated > ago(24h)
+| where SubType_s == "FlowLog" and FlowStatus_s == "D"
+| summarize DeniedFlows = sum(DeniedInFlows_d + DeniedOutFlows_d) by NSGRule_s, SrcIP_s, DestIP_s, DestPort_d
+| order by DeniedFlows desc
+| take 50

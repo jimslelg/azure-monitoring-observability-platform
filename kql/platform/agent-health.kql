@@ -1,0 +1,8 @@
+// Agent/heartbeat coverage by resource group (last 24 h)
+// Confirms every onboarded machine is actually reporting — a silent gap in
+// coverage is worse than a loud alert.
+// Tables: Heartbeat
+Heartbeat
+| where TimeGenerated > ago(24h)
+| summarize Machines = dcount(Computer), LastSeen = max(TimeGenerated) by ResourceGroup, Category
+| order by Machines desc

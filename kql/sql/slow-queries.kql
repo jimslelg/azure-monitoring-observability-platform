@@ -1,0 +1,9 @@
+// Slowest query signatures from Query Store runtime stats (last 24 h)
+// Requires QueryStoreRuntimeStatistics in the database diagnostic settings.
+// Tables: AzureDiagnostics
+AzureDiagnostics
+| where TimeGenerated > ago(24h)
+| where Category == "QueryStoreRuntimeStatistics"
+| summarize TotalExecutions = sum(count_executions_d), AvgCpuMs = avg(avg_cpu_time_d / 1000), AvgDurationMs = avg(avg_duration_d / 1000) by query_hash_s
+| order by AvgDurationMs desc
+| take 25
