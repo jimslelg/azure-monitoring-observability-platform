@@ -1,0 +1,47 @@
+# Weekly diagnostic-coverage compliance report.
+# Runs Get-DiagnosticCoverage.ps1 read-only against each environment and
+# publishes the CSV; the job fails (exit 3) when uncovered resources exist,
+# which shows up as a red scheduled run — the nudge to run
+# enable-diagnostics.sh or onboard the resource into Terraform.
+
+schedules:
+  - cron: '0 6 * * 1'
+    displayName: 'Monday 06:00 UTC coverage report'
+    branches:
+      include:
+        - main
+    always: true
+
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: serviceConnectionProd
+    value: sc-amop-prod-oidc
+
+jobs:
+  - job: coverage_prod
+    displayName: 'Diagnostic coverage (prod)'
+    steps:
+      - task: AzurePowerShell@5
+        displayName: 'Run Get-DiagnosticCoverage.ps1'
+        inputs:
+          azureSubscription: $(serviceConnectionProd)
+          azurePowerShellVersion: latestVersion
+          pwsh: true
+          ScriptType: InlineScript
+          Inline: |
+            $workspaceId = (Get-AzOperationalInsightsWorkspace |
+                Where-Object Name -like 'log-amop-prod*' |
+                Select-Object -First 1).ResourceId
+            ./scripts/Get-DiagnosticCoverage.ps1 `
+                -WorkspaceId $workspaceId `
+                -OutputPath "$(Build.ArtifactStagingDirectory)/coverage-prod.csv"
+
+      - publish: '$(Build.ArtifactStagingDirectory)/coverage-prod.csv'
+        artifact: coverage-prod
+        condition: always()
+        displayName: 'Publish coverage CSV'

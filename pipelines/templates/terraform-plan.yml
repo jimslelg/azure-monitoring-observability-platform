@@ -1,0 +1,33 @@
+# Produces a saved plan for one environment and publishes it as an artifact
+# so the apply stage executes exactly what was reviewed — never a re-plan.
+parameters:
+  - name: environment
+    type: string
+  - name: serviceConnection
+    type: string
+
+steps:
+  - task: AzureCLI@2
+    displayName: 'terraform plan (${{ parameters.environment }})'
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnection }}
+      scriptType: bash
+      addSpnToEnvironment: true
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+        export ARM_USE_OIDC=true
+        export ARM_CLIENT_ID="$servicePrincipalId"
+        export ARM_OIDC_TOKEN="$idToken"
+        export ARM_TENANT_ID="$tenantId"
+        export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+
+        terraform -chdir=terraform init -input=false \
+          -backend-config=environments/${{ parameters.environment }}.backend.hcl
+        terraform -chdir=terraform plan -input=false \
+          -var-file=environments/${{ parameters.environment }}.tfvars \
+          -out="$(Build.ArtifactStagingDirectory)/${{ parameters.environment }}.tfplan"
+
+  - publish: '$(Build.ArtifactStagingDirectory)/${{ parameters.environment }}.tfplan'
+    artifact: 'tfplan-${{ parameters.environment }}'
+    displayName: 'Publish plan artifact'

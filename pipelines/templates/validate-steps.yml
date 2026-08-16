@@ -1,0 +1,38 @@
+# Static validation: no cloud credentials needed, runs on every PR.
+steps:
+  - script: |
+      set -euo pipefail
+      terraform -chdir=terraform fmt -check -recursive
+      terraform -chdir=terraform init -backend=false -input=false
+      terraform -chdir=terraform validate
+    displayName: 'Terraform fmt + validate'
+
+  - script: |
+      set -euo pipefail
+      python3 - <<'EOF'
+      import json, glob, sys
+      import yaml
+      failures = []
+      for f in glob.glob('workbooks/*.json') + glob.glob('dashboards/**/*.json', recursive=True):
+          if f.endswith('.tpl.json'):
+              continue
+          try:
+              json.load(open(f))
+          except Exception as e:
+              failures.append(f"{f}: {e}")
+      for f in glob.glob('prometheus/*.yaml') + glob.glob('pipelines/**/*.yml', recursive=True):
+          try:
+              list(yaml.safe_load_all(open(f)))
+          except Exception as e:
+              failures.append(f"{f}: {e}")
+      if failures:
+          print("\n".join(failures))
+          sys.exit(1)
+      print("All JSON/YAML definitions parse cleanly.")
+      EOF
+    displayName: 'Workbook / dashboard / rules parse check'
+
+  - script: |
+      set -euo pipefail
+      shellcheck --external-sources scripts/*.sh
+    displayName: 'shellcheck automation scripts'

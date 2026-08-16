@@ -1,0 +1,89 @@
+# Monitoring platform delivery pipeline
+#
+# PR:   Validate only (static checks, no credentials).
+# main: Validate -> plan dev -> apply dev -> plan prod -> apply prod.
+#
+# Auth is OIDC workload identity federation via the service connections —
+# no secrets in variables or YAML. Production approval lives on the
+# 'monitoring-prod' Azure DevOps Environment.
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - terraform/**
+      - workbooks/**
+      - dashboards/**
+      - prometheus/**
+      - scripts/**
+      - pipelines/**
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: serviceConnectionDev
+    value: sc-amop-dev-oidc
+  - name: serviceConnectionProd
+    value: sc-amop-prod-oidc
+
+stages:
+  - stage: Validate
+    displayName: 'Static validation'
+    jobs:
+      - job: validate
+        displayName: 'fmt, validate, parse checks'
+        steps:
+          - template: templates/validate-steps.yml
+
+  - stage: Plan_Dev
+    displayName: 'Plan (dev)'
+    dependsOn: Validate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: plan_dev
+        displayName: 'terraform plan dev'
+        steps:
+          - template: templates/terraform-plan.yml
+            parameters:
+              environment: dev
+              serviceConnection: $(serviceConnectionDev)
+
+  - stage: Apply_Dev
+    displayName: 'Apply (dev)'
+    dependsOn: Plan_Dev
+    jobs:
+      - template: templates/terraform-apply.yml
+        parameters:
+          environment: dev
+          serviceConnection: $(serviceConnectionDev)
+          adoEnvironment: monitoring-dev
+
+  - stage: Plan_Prod
+    displayName: 'Plan (prod)'
+    dependsOn: Apply_Dev
+    jobs:
+      - job: plan_prod
+        displayName: 'terraform plan prod'
+        steps:
+          - template: templates/terraform-plan.yml
+            parameters:
+              environment: prod
+              serviceConnection: $(serviceConnectionProd)
+
+  - stage: Apply_Prod
+    displayName: 'Apply (prod)'
+    dependsOn: Plan_Prod
+    jobs:
+      - template: templates/terraform-apply.yml
+        parameters:
+          environment: prod
+          serviceConnection: $(serviceConnectionProd)
+          adoEnvironment: monitoring-prod
